@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 @Builder
 @Data
 public class User {
-    Long id;
-    String email;
-    String login;
-    String name;
+    private Long id;
+    private String email;
+    private String login;
+    private String name;
 
     @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)
-    LocalDate birthday;
+    private LocalDate birthday;
 }

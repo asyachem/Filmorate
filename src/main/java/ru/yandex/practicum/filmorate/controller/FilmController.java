@@ -18,7 +18,8 @@ import java.util.Map;
 public class FilmController {
     private final Map<Long, Film> films = new HashMap<>();
     private final static Logger log = LoggerFactory.getLogger(UserController.class);
-
+    final static Integer MAX_LENGTH_DESCRIPTION = 200;
+    final static LocalDate OLD_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
     @GetMapping
     public Collection<Film> findAll() {
@@ -32,11 +33,11 @@ public class FilmController {
             throw new ConditionsNotMetException("Имя фильма не может быть пустым");
         }
 
-        if (film.getDescription().length() > 200) {
+        if (film.getDescription() == null || film.getDescription().length() > MAX_LENGTH_DESCRIPTION) {
             log.warn("ошибка при вводе описания фильма");
             throw new ValidationException("Максимальная длина описания — 200 символов");
         }
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(OLD_RELEASE_DATE)) {
             log.warn("ошибка при вводе даты релиза фильма");
             throw new ValidationException("Дата релиза фильма — не раньше 28 декабря 1895 года;");
         }
@@ -64,14 +65,14 @@ public class FilmController {
                 oldFilm.setName(newFilm.getName());
             }
             if (newFilm.getDescription() != null) {
-                if (newFilm.getDescription().length() > 200) {
+                if (newFilm.getDescription().length() > MAX_LENGTH_DESCRIPTION) {
                     log.warn("ошибка при вводе описания фильма");
                     throw new ValidationException("Максимальная длина описания — 200 символов");
                 }
                 oldFilm.setDescription(newFilm.getDescription());
             }
             if (newFilm.getReleaseDate() != null) {
-                if (newFilm.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+                if (newFilm.getReleaseDate().isBefore(OLD_RELEASE_DATE)) {
                     log.warn("ошибка при вводе даты релиза фильма");
                     throw new ValidationException("Дата релиза фильма — не раньше 28 декабря 1895 года;");
                 }

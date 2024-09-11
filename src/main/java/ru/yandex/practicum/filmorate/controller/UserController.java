@@ -12,12 +12,14 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
     private final Map<Long, User> users = new HashMap<>();
+    private final HashSet <String> emails = new HashSet<>();
     private final static Logger log = LoggerFactory.getLogger(UserController.class);
 
     @GetMapping
@@ -27,7 +29,7 @@ public class UserController {
 
     @PostMapping
     public User create(@RequestBody User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || user.getEmail().indexOf('@') == -1) {
+        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.warn("ошибка при вводе почты");
             throw new ValidationException("Почта не может быть пустым полем и должна содержать @");
         }
@@ -36,6 +38,10 @@ public class UserController {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
         if (user.getName() == null) {
+            if (user.getLogin() == null || user.getLogin().indexOf(' ') != -1) {
+                log.warn("ошибка при вводе логина");
+                throw new ValidationException("Логин не может быть пустым и содержать пробелы");
+            }
             user.setName(user.getLogin());
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {
@@ -44,9 +50,9 @@ public class UserController {
         }
 
         checkEmail(user);
-
         user.setId(getNextId());
         users.put(user.getId(), user);
+        emails.add(user.getEmail());
         return user;
     }
 
@@ -67,11 +73,13 @@ public class UserController {
                 oldUser.setName(newUser.getName());
             }
             if (newUser.getEmail() != null) {
-                if (newUser.getEmail().indexOf('@') == -1) {
+                if (!newUser.getEmail().contains("@")) {
                     log.warn("емейл указан без @");
                     throw new ValidationException("Почта должна содержать @");
                 }
+                emails.remove(oldUser.getEmail());
                 oldUser.setEmail(newUser.getEmail());
+                emails.add(newUser.getEmail());
             }
             if (newUser.getLogin() != null) {
                 if (newUser.getLogin().indexOf(' ') != -1) {
@@ -104,11 +112,9 @@ public class UserController {
     }
 
     private void checkEmail(User user) {
-        for (Map.Entry<Long, User> entry : users.entrySet()) {
-            if(user.getEmail().equals(entry.getValue().getEmail())) {
-                log.warn("уже существует пользователь с заданным айди");
-                throw new DuplicatedDataException("Этот емейл уже используется");
-            }
+        if (emails.contains(user.getEmail())) {
+            log.warn("уже существует пользователь с заданным имейлом");
+            throw new DuplicatedDataException("Этот имейл уже используется");
         }
     }
 }
