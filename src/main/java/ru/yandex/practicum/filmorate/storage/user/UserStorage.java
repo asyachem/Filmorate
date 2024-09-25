@@ -7,7 +7,6 @@ import java.util.Collection;
 public interface UserStorage {
     Collection<User> getAll();
     boolean containsEmail(String email);
-    boolean containsUser(long id);
     long getNextId();
     User putUser(User user);
     User getUser(long id);

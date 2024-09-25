@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -56,37 +55,33 @@ public class FilmService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        if (filmStorage.containsFilm(newFilm.getId())) {
-            Film oldFilm = filmStorage.get(newFilm.getId());
+        Film oldFilm = filmStorage.get(newFilm.getId());
 
-            if (newFilm.getName() != null) {
-                oldFilm.setName(newFilm.getName());
-            }
-            if (newFilm.getDescription() != null) {
-                if (newFilm.getDescription().length() > MAX_LENGTH_DESCRIPTION) {
-                    log.warn("ошибка при вводе описания фильма");
-                    throw new ValidationException("Максимальная длина описания — 200 символов");
-                }
-                oldFilm.setDescription(newFilm.getDescription());
-            }
-            if (newFilm.getReleaseDate() != null) {
-                if (newFilm.getReleaseDate().isBefore(OLD_RELEASE_DATE)) {
-                    log.warn("ошибка при вводе даты релиза фильма");
-                    throw new ValidationException("Дата релиза фильма — не раньше 28 декабря 1895 года;");
-                }
-                oldFilm.setReleaseDate(newFilm.getReleaseDate());
-            }
-            if (newFilm.getDuration() != 0) {
-                if (newFilm.getDuration() < 0) {
-                    log.warn("ошибка при вводе продолжительности фильма");
-                    throw new ValidationException("Продолжительность фильма должна быть положительным числом");
-                }
-                oldFilm.setDuration(newFilm.getDuration());
-            }
-            return oldFilm;
+        if (newFilm.getName() != null) {
+            oldFilm.setName(newFilm.getName());
         }
-        log.warn("фильм с заданным айди не был обнаружен");
-        throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
+        if (newFilm.getDescription() != null) {
+            if (newFilm.getDescription().length() > MAX_LENGTH_DESCRIPTION) {
+                log.warn("ошибка при вводе описания фильма");
+                throw new ValidationException("Максимальная длина описания — 200 символов");
+            }
+            oldFilm.setDescription(newFilm.getDescription());
+        }
+        if (newFilm.getReleaseDate() != null) {
+            if (newFilm.getReleaseDate().isBefore(OLD_RELEASE_DATE)) {
+                log.warn("ошибка при вводе даты релиза фильма");
+                throw new ValidationException("Дата релиза фильма — не раньше 28 декабря 1895 года;");
+            }
+            oldFilm.setReleaseDate(newFilm.getReleaseDate());
+        }
+        if (newFilm.getDuration() != 0) {
+            if (newFilm.getDuration() < 0) {
+                log.warn("ошибка при вводе продолжительности фильма");
+                throw new ValidationException("Продолжительность фильма должна быть положительным числом");
+            }
+            oldFilm.setDuration(newFilm.getDuration());
+        }
+        return oldFilm;
     }
 
     private long getNextId() {
@@ -98,13 +93,10 @@ public class FilmService {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
-        if (filmStorage.containsFilm(filmId)) {
-            filmStorage.get(filmId).getLikedUsersId().add(userId);
-            return filmStorage.get(filmId);
-        }
 
-        log.warn("фильм с заданным айди не был обнаружен");
-        throw new NotFoundException("Фильм с id = " + filmId + " не найден");
+        Film film = filmStorage.get(filmId);
+        film.getLikedUsersId().add(userId);
+        return film;
     }
 
     public Film deleteLike(Long filmId, Long userId) {
@@ -113,12 +105,8 @@ public class FilmService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        if (filmStorage.containsFilm(filmId)) {
-            filmStorage.get(filmId).getLikedUsersId().remove(userId);
-            return filmStorage.get(filmId);
-        }
-
-        log.warn("фильм с заданным айди не был обнаружен");
-        throw new NotFoundException("Фильм с id = " + filmId + " не найден");
+        Film film = filmStorage.get(filmId);
+        film.getLikedUsersId().remove(userId);
+        return film;
     }
 }

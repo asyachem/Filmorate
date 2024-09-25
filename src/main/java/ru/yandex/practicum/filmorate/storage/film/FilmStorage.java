@@ -9,5 +9,4 @@ public interface FilmStorage {
     Film get(long id);
     Collection<Film> getAll();
     long getNextId();
-    boolean containsFilm(long id);
 }

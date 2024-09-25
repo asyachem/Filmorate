@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -58,44 +57,42 @@ public class UserService {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
-        if (userStorage.containsUser(newUser.getId())) {
-            User oldUser = userStorage.getUser(newUser.getId());
 
-            if (!oldUser.getEmail().equals(newUser.getEmail())) {
-                checkEmail(newUser);
-            }
+        User oldUser = userStorage.getUser(newUser.getId());
 
-            if (newUser.getName() != null) {
-                oldUser.setName(newUser.getName());
-            }
-            if (newUser.getEmail() != null) {
-                if (!newUser.getEmail().contains("@")) {
-                    log.warn("емейл указан без @");
-                    throw new ValidationException("Почта должна содержать @");
-                }
-                userStorage.removeEmail(oldUser.getEmail());
-                oldUser.setEmail(newUser.getEmail());
-                userStorage.addEmail(newUser.getEmail());
-            }
-            if (newUser.getLogin() != null) {
-                if (newUser.getLogin().indexOf(' ') != -1) {
-                    log.warn("логин указан с пробелами");
-                    throw new ValidationException("Логин не может быть пустым и содержать пробелы");
-                }
-                oldUser.setLogin(newUser.getLogin());
-            }
-            if (newUser.getBirthday() != null) {
-                if (newUser.getBirthday().isAfter(LocalDate.now())) {
-                    log.warn("указали неверную дату рождения");
-                    throw new ValidationException("Дата рождения не может быть в будущем");
-                }
-                oldUser.setBirthday(newUser.getBirthday());
-            }
-
-            return oldUser;
+        if (!oldUser.getEmail().equals(newUser.getEmail())) {
+            checkEmail(newUser);
         }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+
+        if (newUser.getName() != null) {
+            oldUser.setName(newUser.getName());
+        }
+        if (newUser.getEmail() != null) {
+            if (!newUser.getEmail().contains("@")) {
+                log.warn("емейл указан без @");
+                throw new ValidationException("Почта должна содержать @");
+            }
+            userStorage.removeEmail(oldUser.getEmail());
+            oldUser.setEmail(newUser.getEmail());
+            userStorage.addEmail(newUser.getEmail());
+        }
+        if (newUser.getLogin() != null) {
+            if (newUser.getLogin().indexOf(' ') != -1) {
+                log.warn("логин указан с пробелами");
+                throw new ValidationException("Логин не может быть пустым и содержать пробелы");
+            }
+            oldUser.setLogin(newUser.getLogin());
+        }
+        if (newUser.getBirthday() != null) {
+            if (newUser.getBirthday().isAfter(LocalDate.now())) {
+                log.warn("указали неверную дату рождения");
+                throw new ValidationException("Дата рождения не может быть в будущем");
+            }
+            oldUser.setBirthday(newUser.getBirthday());
+        }
+
+        return oldUser;
+
     }
 
     private void checkEmail(User user) {
@@ -115,18 +112,12 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        if (userStorage.containsUser(userId) && userStorage.containsUser(friendId)) {
-            return addFriend(userStorage.getUser(userId), userStorage.getUser(friendId));
-        }
+        User user = userStorage.getUser(userId);
+        User friend = userStorage.getUser(friendId);
+        user.getFriends().add(friendId);
+        friend.getFriends().add(userId);
 
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
-    }
-
-    public User addFriend(User user, User friend) {
-        user.getFriends().add(friend.getId());
-        friend.getFriends().add(user.getId());
-        return user;
+        return userStorage.getUser(userId);
     }
 
     public User deleteFriend(Long userId, Long friendId) {
@@ -135,16 +126,11 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        if (userStorage.containsUser(userId) && userStorage.containsUser(friendId)) {
-            return deleteFriend(userStorage.getUser(userId), userStorage.getUser(friendId));
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
-    }
+        User user = userStorage.getUser(userId);
+        User friend = userStorage.getUser(friendId);
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
 
-    public User deleteFriend(User user, User friend) {
-        user.getFriends().remove(friend.getId());
-        friend.getFriends().remove(user.getId());
         return user;
     }
 
@@ -154,11 +140,7 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        if (userStorage.containsUser(userId)) {
-            return new ArrayList<>(userStorage.getUser(userId).getFriends());
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
+        return new ArrayList<>(userStorage.getUser(userId).getFriends());
     }
 
     public Collection<Long> findMutualFriends(Long userId, Long otherId) {
@@ -167,17 +149,11 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        if (userStorage.containsUser(userId) && userStorage.containsUser(otherId)) {
-            return getAMutualFriends(userStorage.getUser(userId), userStorage.getUser(otherId));
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
-    }
+        User user = userStorage.getUser(userId);
+        User otherUser = userStorage.getUser(otherId);
 
-    public Collection<Long> getAMutualFriends (User user, User friend) {
-      Set<Long> usersFriend = new HashSet<>(user.getFriends());
-      usersFriend.retainAll(friend.getFriends());
-
-      return usersFriend;
+        Set<Long> usersFriend = new HashSet<>(user.getFriends());
+        usersFriend.retainAll(otherUser.getFriends());
+        return usersFriend;
     }
 }
