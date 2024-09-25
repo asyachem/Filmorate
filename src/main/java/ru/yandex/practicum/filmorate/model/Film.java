@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ public class Film {
     private Long id;
     private String name;
     private String description;
+    @JsonIgnore
     private Set<Long> likedUsersId;
 
     @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)

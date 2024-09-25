@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.io.IOException;
 import java.net.URI;
@@ -25,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 class FilmorateApplicationTests {
-	FilmController filmController = new FilmController(new InMemoryFilmStorage(new FilmService()));
-	UserController userController = new UserController(new InMemoryUserStorage(new UserService()));
+	FilmController filmController = new FilmController(new FilmService(new InMemoryFilmStorage()));
+	UserController userController = new UserController(new UserService(new InMemoryUserStorage()));
 
 	@Test
 	public void testGetFilms() throws IOException, InterruptedException {

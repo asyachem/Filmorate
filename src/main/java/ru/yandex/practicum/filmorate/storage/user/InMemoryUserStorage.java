@@ -1,174 +1,67 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
     private final HashSet<String> emails = new HashSet<>();
-    private final static Logger log = LoggerFactory.getLogger(UserController.class);
-    private final UserService userService;
 
-    public InMemoryUserStorage(UserService userService) {
-        this.userService = userService;
+    @Override
+    public Collection<User> getAll()  {
+        return users.values();
     }
 
     @Override
-    public User create(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            log.warn("ошибка при вводе почты");
-            throw new ValidationException("Почта не может быть пустым полем и должна содержать @");
-        }
-        if (user.getLogin() == null || user.getLogin().indexOf(' ') != -1) {
-            log.warn("ошибка при вводе логина");
-            throw new ValidationException("Логин не может быть пустым и содержать пробелы");
-        }
-        if (user.getName() == null) {
-            if (user.getLogin() == null || user.getLogin().indexOf(' ') != -1) {
-                log.warn("ошибка при вводе логина");
-                throw new ValidationException("Логин не может быть пустым и содержать пробелы");
-            }
-            user.setName(user.getLogin());
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("ошибка при вводе даты рождения");
-            throw new ValidationException("Дата рождения не может быть в будущем");
-        }
+    public boolean containsEmail(String email) {
+        return emails.contains(email);
+    }
 
-        checkEmail(user);
-        user.setId(getNextId());
+    @Override
+    public boolean containsUser(long id) {
+        return users.containsKey(id);
+    }
+
+    @Override
+    public User putUser(User user) {
         users.put(user.getId(), user);
-        emails.add(user.getEmail());
         return user;
     }
 
     @Override
-    public User update(User newUser) {
-        if (newUser.getId() == null) {
-            log.warn("ошибка - не указан id");
-            throw new ConditionsNotMetException("Id должен быть указан");
-        }
-        if (users.containsKey(newUser.getId())) {
-            User oldUser = users.get(newUser.getId());
-
-            if (!oldUser.getEmail().equals(newUser.getEmail())) {
-                checkEmail(newUser);
-            }
-
-            if (newUser.getName() != null) {
-                oldUser.setName(newUser.getName());
-            }
-            if (newUser.getEmail() != null) {
-                if (!newUser.getEmail().contains("@")) {
-                    log.warn("емейл указан без @");
-                    throw new ValidationException("Почта должна содержать @");
-                }
-                emails.remove(oldUser.getEmail());
-                oldUser.setEmail(newUser.getEmail());
-                emails.add(newUser.getEmail());
-            }
-            if (newUser.getLogin() != null) {
-                if (newUser.getLogin().indexOf(' ') != -1) {
-                    log.warn("логин указан с пробелами");
-                    throw new ValidationException("Логин не может быть пустым и содержать пробелы");
-                }
-                oldUser.setLogin(newUser.getLogin());
-            }
-            if (newUser.getBirthday() != null) {
-                if (newUser.getBirthday().isAfter(LocalDate.now())) {
-                    log.warn("указали неверную дату рождения");
-                    throw new ValidationException("Дата рождения не может быть в будущем");
-                }
-                oldUser.setBirthday(newUser.getBirthday());
-            }
-
-            return oldUser;
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+    public User getUser(long id) {
+        return users.get(id);
     }
 
-    public Collection<User> findAll()  {
-        return users.values();
+    @Override
+    public void putEmail(String email) {
+        emails.add(email);
     }
 
-    private long getNextId() {
+    @Override
+    public void removeUser(long id) {
+        users.remove(id);
+    }
+
+    @Override
+    public void removeEmail(String id) {
+        emails.remove(id);
+    }
+
+    @Override
+    public void addEmail(String id) {
+        emails.add(id);
+    }
+
+    public long getNextId() {
         long currentMaxId = users.keySet()
                 .stream()
                 .mapToLong(id -> id)
                 .max()
                 .orElse(0);
         return ++currentMaxId;
-    }
-
-    private void checkEmail(User user) {
-        if (emails.contains(user.getEmail())) {
-            log.warn("уже существует пользователь с заданным имейлом");
-            throw new DuplicatedDataException("Этот имейл уже используется");
-        }
-    }
-
-    public User addFriend(Long userId, Long friendId) {
-        if (userId == null || friendId == null) {
-            log.warn("ошибка - не указан id");
-            throw new ConditionsNotMetException("Id должен быть указан");
-        }
-
-        if (users.containsKey(userId) && users.containsKey(friendId)) {
-            return userService.addFriend(users.get(userId), users.get(friendId));
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
-    }
-
-    public User deleteFriend(Long userId, Long friendId) {
-        if (userId == null || friendId == null) {
-            log.warn("ошибка - не указан id");
-            throw new ConditionsNotMetException("Id должен быть указан");
-        }
-
-        if (users.containsKey(userId) && users.containsKey(friendId)) {
-            return userService.deleteFriend(users.get(userId), users.get(friendId));
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
-    }
-
-    public Collection<Long> findUserFriends(Long userId) {
-        if (userId == null) {
-            log.warn("ошибка - не указан id");
-            throw new ConditionsNotMetException("Id должен быть указан");
-        }
-
-        if (users.containsKey(userId)) {
-            return new ArrayList<>(users.get(userId).getFriends());
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
-    }
-
-    public Collection<Long> findMutualFriends(Long userId, Long otherId) {
-        if (userId == null || otherId == null) {
-            log.warn("ошибка - не указан id");
-            throw new ConditionsNotMetException("Id должен быть указан");
-        }
-
-        if (users.containsKey(userId) && users.containsKey(otherId)) {
-            return userService.getAMutualFriends(users.get(userId), users.get(otherId));
-        }
-        log.warn("пользователь с заданным айди не был обнаружен");
-        throw new NotFoundException("Пользователь не найден");
     }
 }
