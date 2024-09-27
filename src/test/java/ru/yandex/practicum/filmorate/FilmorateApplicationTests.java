@@ -8,6 +8,11 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 class FilmorateApplicationTests {
-	FilmController filmController = new FilmController();
-	UserController userController = new UserController();
+	FilmController filmController = new FilmController(new FilmService(new InMemoryFilmStorage()));
+	UserController userController = new UserController(new UserService(new InMemoryUserStorage()));
 
 	@Test
 	public void testGetFilms() throws IOException, InterruptedException {
