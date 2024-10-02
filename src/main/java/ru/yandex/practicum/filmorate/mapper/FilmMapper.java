@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.dal.FilmDbStorage;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -15,8 +14,6 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
 @Slf4j
 @Component
@@ -26,7 +23,6 @@ public class FilmMapper implements RowMapper<Film> {
     final static LocalDate OLD_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
     public static Film updateFilmFields(Film film, Film requestFilm) {
-        // todo как обновить жанры
         if (requestFilm.hasName()) {
             film.setName(requestFilm.getName());
         }
@@ -65,17 +61,6 @@ public class FilmMapper implements RowMapper<Film> {
         dto.setId(film.getId());
         dto.setName(film.getName());
         dto.setDescription(film.getDescription());
-
-
-        if (film.getGenres() != null) {
-            Set<Genre> genres = new HashSet<>();
-            for (Genre genre : film.getGenres()) {
-                genres.add(makeGenre(genre.getId()));
-            }
-            dto.setGenres(genres);
-        } else {
-            dto.setGenres(null);
-        }
 
         if (film.getMpa() != null) {
             dto.setMpa(makeMpa(film.getMpa().getId()));
@@ -150,9 +135,6 @@ public class FilmMapper implements RowMapper<Film> {
 
     @Override
     public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Set<Genre> genres = new HashSet<>();
-        genres.add(makeGenre(rs.getLong("genre_id")));
-
         return Film.builder()
                 .id(rs.getLong("id"))
                 .name(rs.getString("name"))
@@ -160,7 +142,6 @@ public class FilmMapper implements RowMapper<Film> {
                 .releaseDate(rs.getDate("release_date").toLocalDate())
                 .duration(rs.getInt("duration"))
                 .mpa(makeMpa(rs.getLong("mpa")))
-                .genres(genres)
                 .build();
     }
 }

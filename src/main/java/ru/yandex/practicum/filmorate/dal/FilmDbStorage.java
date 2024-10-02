@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.mapper.LongMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -17,12 +16,8 @@ import java.util.Optional;
 @Repository
 public class FilmDbStorage extends BaseDbStorage<Film> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM films";
-    private static final String FIND_GENRE_QUERY = "SELECT genre_id FROM film_genres where film_id=?";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM films WHERE id = ?";
     private static final String FIND_USER_LIKES_QUERY = "SELECT * FROM users WHERE id IN (select users_id from film_users where film_id = ?)";
-
-    //private static final String FIND_BY_ID_QUERY = "select *, g.genre_id from films as f INNER JOIN film_genres as g ON f.id = g.film_id where f.id = ?";
-
     private static final String FIND_POPULAR_QUERY = "select * from films AS f inner join (select film_id, count(*) as cnt from film_users group by film_id ) AS uf on uf.film_id = f.id order by uf.cnt DESC LIMIT ?";
     private static final String INSERT_QUERY = "INSERT INTO films (name, description, mpa, release_date, duration) " +
             "VALUES (?, ?, ?, ?, ?)";
@@ -35,12 +30,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> {
     private static final String DELETE_GENRES_QUERY = "DELETE FROM film_genres WHERE film_id = ?";
 
     private RowMapper<User> userRowMapper;
-    private RowMapper<Long> longRowMapper;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, RowMapper<User> userRowMapper, RowMapper<Long> longRowMapper) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, RowMapper<User> userRowMapper) {
         super(jdbc, mapper);
         this.userRowMapper = userRowMapper;
-        this.longRowMapper = longRowMapper;
     }
 
     public List<Film> findAll() {
@@ -48,9 +41,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> {
     }
 
     public Optional<Film> findById(long filmId) {
-        // не получается получить список всех айди жанров
-       //   List<Long> genres = JdbcTemplate.query(FIND_GENRE_QUERY, longRowMapper, filmId);
-
         return findOne(FIND_BY_ID_QUERY, filmId);
     }
 

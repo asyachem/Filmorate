@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
 
 @Data
 public class FilmDto {
@@ -15,7 +15,7 @@ public class FilmDto {
     private Long id;
     private String name;
     private String description;
-    private Set<Genre> genres;
+    private List<Genre> genres;
     private Mpa mpa;
     @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)
     private LocalDate releaseDate;

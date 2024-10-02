@@ -12,6 +12,9 @@ import java.util.Optional;
 public class GenreDbStorage extends BaseDbStorage<Genre> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM genres";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM genres WHERE id = ?";
+    private static final String FIND_BY_FILM_ID_QUERY = "SELECT g.* FROM genres g" +
+            " inner join film_genres fg on g.id=fg.genre_id " +
+            " WHERE fg.film_id = ? order by g.id";
 
     public GenreDbStorage(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);
@@ -25,7 +28,7 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
         return findOne(FIND_BY_ID_QUERY, genreId);
     }
 
-    public List<Genre> findGenreByIdFilm(long genreId) {
-        return findMany(FIND_BY_ID_QUERY, genreId);
+    public List<Genre> findGenreByFilmId(long genreId) {
+        return findMany(FIND_BY_FILM_ID_QUERY, genreId);
     }
 }

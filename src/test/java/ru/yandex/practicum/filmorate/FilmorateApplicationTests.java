@@ -7,10 +7,12 @@ import org.springframework.jdbc.core.RowMapper;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.dal.FilmDbStorage;
+import ru.yandex.practicum.filmorate.dal.GenreDbStorage;
 import ru.yandex.practicum.filmorate.dal.UserDbStorage;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -40,10 +42,10 @@ class FilmorateApplicationTests {
 		public User mapRow(ResultSet rs, int rowNum) throws SQLException {
 			return null;
 		}
-	}, new RowMapper<Long>() {
+	}), new GenreDbStorage(new JdbcTemplate(), new RowMapper<Genre>() {
 		@Override
-		public Long mapRow(ResultSet rs, int rowNum) throws SQLException {
-			return 0L;
+		public Genre mapRow(ResultSet rs, int rowNum) throws SQLException {
+			return null;
 		}
 	})));
 	UserController userController = new UserController(new UserService(new InMemoryUserStorage(), new UserDbStorage(new JdbcTemplate(), new RowMapper<User>() {

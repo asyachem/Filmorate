@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.FilmDbStorage;
+import ru.yandex.practicum.filmorate.dal.GenreDbStorage;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -22,9 +23,11 @@ public class FilmService {
     final static Integer MAX_LENGTH_DESCRIPTION = 200;
     final static LocalDate OLD_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private final FilmDbStorage filmDbStorage;
+    private final GenreDbStorage genreDbStorage;
 
-    public FilmService(FilmDbStorage filmDbStorage) {
+    public FilmService(FilmDbStorage filmDbStorage, GenreDbStorage genreDbStorage) {
         this.filmDbStorage = filmDbStorage;
+        this.genreDbStorage = genreDbStorage;
     }
 
     public Collection<Film> findAll() {
@@ -36,10 +39,12 @@ public class FilmService {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
-
-        return filmDbStorage.findById(id)
+        FilmDto result = filmDbStorage.findById(id)
                 .map(FilmMapper::mapToFilmDto)
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
+        List<Genre> genres = genreDbStorage.findGenreByFilmId(id);
+        result.setGenres(genres);
+        return result;
     }
 
     public Film create(Film film) {
@@ -67,10 +72,6 @@ public class FilmService {
             log.warn("ошибка при вводе рейтинга фильма - такого рейтинга нет");
             throw new ValidationException("Рейтинга фильма с таким айди нет");
         }
-/*        if (film.getGenres() == null) {
-            log.warn("ошибка при вводе жанра фильма - пустое поле");
-            throw new ValidationException("Жанр фильма не может быть пустым");
-        }*/
         if (film.getGenres() != null) {
             for (Genre genre : film.getGenres()) {
                 if (checkGenre(genre.getId()) == null) {

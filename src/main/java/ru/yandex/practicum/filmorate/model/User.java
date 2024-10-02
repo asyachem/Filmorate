@@ -15,7 +15,6 @@ public class User {
     private String email;
     private String login;
     private String name;
-    // todo
     @JsonIgnore
     private Set<Long> friends;
     @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)

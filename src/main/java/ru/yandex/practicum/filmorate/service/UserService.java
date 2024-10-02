@@ -75,13 +75,6 @@ public class UserService {
         return updatedUser;
     }
 
-    private void checkEmail(User user) {
-        if (userStorage.containsEmail(user.getEmail())) {
-            log.warn("уже существует пользователь с заданным имейлом");
-            throw new DuplicatedDataException("Этот имейл уже используется");
-        }
-    }
-
     public void addFriend(Long userId, Long friendId) {
         if (userId == null || friendId == null) {
             log.warn("ошибка - не указан id");

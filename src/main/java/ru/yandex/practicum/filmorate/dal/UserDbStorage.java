@@ -13,7 +13,6 @@ import java.util.Optional;
 public class UserDbStorage extends BaseDbStorage<User> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM users";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
-    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM users WHERE email = ?";
     private static final String FIND_FRIENDS_QUERY = "SELECT * FROM users as u WHERE u.id IN (select friends_id from friendship where user_id = ?)";
     private static final String INSERT_QUERY = "INSERT INTO users(email, login, name, birthday)" +
             "VALUES (?, ?, ?, ?)";
