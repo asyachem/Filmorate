@@ -19,6 +19,10 @@ public class UserDbStorage extends BaseDbStorage<User> {
     private static final String UPDATE_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
     private static final String ADD_FRIEND = "INSERT INTO friendship(user_id, friends_id) VALUES (?, ?)";
     private static final String DELETE_FRIEND = "DELETE FROM friendship WHERE user_id = ? AND friends_id = ?";
+    /*private static final String FIND_MUTUAL_FRIEND = "select * from (select u.*, f.FRIENDS_ID as friends_id from USERS u right join FRIENDSHIP as f ON u.ID = f.USER_ID where u.id = ?) as one inner join (select u.*, f.FRIENDS_ID as friends from USERS u right join FRIENDSHIP as f ON u.ID = f.USER_ID where u.id = ?) as two where one.FRIENDS_ID = two.friends;";*/
+    private static final String FIND_MUTUAL_FRIEND = "select u.* from users u right join (select f.FRIENDS_ID as one_f from USERS u right join FRIENDSHIP as f ON u.ID = f.USER_ID where u.id = ?) as one ON one.one_f = u.ID inner join (select f.FRIENDS_ID as two_f from USERS u right join FRIENDSHIP as f ON u.ID = f.USER_ID where u.id = ?) as two ON two.two_f = u.ID where one.one_f = two.two_f;";
+
+
 
 
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
@@ -78,7 +82,9 @@ public class UserDbStorage extends BaseDbStorage<User> {
     }
 
     public List<User> findMutualFriends(long userId, long otherId) {
-        List<User> friendsUser = findFriends(userId);
+        return findMany(FIND_MUTUAL_FRIEND, userId, otherId);
+
+        /*List<User> friendsUser = findFriends(userId);
         List<User> friendsOtherUser = findFriends(otherId);
 
         List<User> mutualFriends = new ArrayList<>();
@@ -88,6 +94,6 @@ public class UserDbStorage extends BaseDbStorage<User> {
             }
         }
 
-        return mutualFriends;
+        return mutualFriends;*/
     }
 }

@@ -1,8 +1,8 @@
 package ru.yandex.practicum.filmorate.dal;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
@@ -18,16 +18,25 @@ public class BaseDbStorage<T> {
     protected final RowMapper<T> mapper;
 
     protected Optional<T> findOne(String query, Object... params) {
-        try {
-            T result = jdbc.queryForObject(query, mapper, params);
-            return Optional.ofNullable(result);
-        } catch (EmptyResultDataAccessException ignored) {
+        List<T> results = jdbc.query(query, mapper, params);
+        if(!results.isEmpty()){
+            return Optional.of(results.getFirst());
+        }
+        else {
             return Optional.empty();
         }
     }
 
+/*    protected Optional<List<T>> findOne(String query, Object... params) {
+        return Optional.ofNullable(jdbc.query(query, mapper, params));
+    }*/
+
     protected List<T> findMany(String query, Object... params) {
         return jdbc.query(query, mapper, params);
+    }
+
+    protected List<T> findMany(String query, ResultSetExtractor<List<T>> extractor, Object... params) {
+        return jdbc.query(query, extractor, params);
     }
 
     protected boolean delete(String query, long id) {

@@ -15,13 +15,11 @@ public class MpaController {
     private final MpaService mpaService;
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public Collection<Mpa> findAll() {
         return mpaService.findAll();
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public Mpa findById(@PathVariable("id") Long mpaId) {
         return mpaService.findById(mpaId);
     }

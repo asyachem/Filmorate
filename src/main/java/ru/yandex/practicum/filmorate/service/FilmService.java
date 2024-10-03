@@ -3,8 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.FilmDbStorage;
-import ru.yandex.practicum.filmorate.dal.GenreDbStorage;
-import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -23,27 +21,23 @@ public class FilmService {
     final static Integer MAX_LENGTH_DESCRIPTION = 200;
     final static LocalDate OLD_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private final FilmDbStorage filmDbStorage;
-    private final GenreDbStorage genreDbStorage;
 
-    public FilmService(FilmDbStorage filmDbStorage, GenreDbStorage genreDbStorage) {
+    public FilmService(FilmDbStorage filmDbStorage) {
         this.filmDbStorage = filmDbStorage;
-        this.genreDbStorage = genreDbStorage;
     }
 
     public Collection<Film> findAll() {
-        return filmDbStorage.findAll();
+        Collection<Film> films = filmDbStorage.findAll();
+        return films;
     }
 
-    public FilmDto findById(Long id) {
+    public Film findById(Long id) {
         if (id == null) {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
-        FilmDto result = filmDbStorage.findById(id)
-                .map(FilmMapper::mapToFilmDto)
+        Film result = filmDbStorage.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
-        List<Genre> genres = genreDbStorage.findGenreByFilmId(id);
-        result.setGenres(genres);
         return result;
     }
 
@@ -81,8 +75,8 @@ public class FilmService {
             }
         }
 
-
-        return filmDbStorage.save(film);
+        filmDbStorage.save(film);
+        return findById(film.getId());
     }
 
     public Mpa checkMpa(long mpaId) {

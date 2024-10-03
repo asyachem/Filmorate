@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -17,14 +16,12 @@ public class FilmController {
     private final FilmService filmService;
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public Collection<Film> findAll() {
         return filmService.findAll();
     }
 
     @GetMapping("{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public FilmDto findById(@PathVariable("id") Long filmId) {
+    public Film findById(@PathVariable("id") Long filmId) {
         return filmService.findById(filmId);
     }
 
@@ -39,13 +36,11 @@ public class FilmController {
         return filmService.update(newFilm);
     }
 
-    @ResponseStatus(HttpStatus.OK)
     @PutMapping("/{id}/like/{userId}")
     public void likeFilm(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
         filmService.likeFilm(filmId, userId);
     }
 
-    @ResponseStatus(HttpStatus.OK)
     @DeleteMapping("/{id}/like/{userId}")
     public void deleteLike(@PathVariable("id") Long filmId,
                              @PathVariable("userId") Long userId) {

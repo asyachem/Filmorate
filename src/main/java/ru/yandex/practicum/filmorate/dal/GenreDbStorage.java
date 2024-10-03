@@ -28,7 +28,7 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
         return findOne(FIND_BY_ID_QUERY, genreId);
     }
 
-    public List<Genre> findGenreByFilmId(long genreId) {
-        return findMany(FIND_BY_FILM_ID_QUERY, genreId);
+    public List<Genre> findGenreByFilmId(long filmId) {
+        return findMany(FIND_BY_FILM_ID_QUERY, filmId);
     }
 }

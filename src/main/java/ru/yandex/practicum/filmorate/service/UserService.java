@@ -100,12 +100,6 @@ public class UserService {
         userDbStorage.findById(friendId)
                 .orElseThrow(() -> new NotFoundException("Друг пользователя не найден"));
 
-        List<User> friends = userDbStorage.findFriends(userId);
-        User friend = userDbStorage.findById(friendId).get();
-        if (!friends.contains(friend)) {
-            log.warn("Пользователи не друзья, удаление из друзей отклонено");
-        }
-
         userDbStorage.deleteFriend(userId, friendId);
     }
 
