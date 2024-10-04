@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
@@ -21,13 +22,21 @@ public class FilmService {
     final static Integer MAX_LENGTH_DESCRIPTION = 200;
     final static LocalDate OLD_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private final FilmDbStorage filmDbStorage;
+    private final GenreService genreService;
 
-    public FilmService(FilmDbStorage filmDbStorage) {
+    public FilmService(FilmDbStorage filmDbStorage, GenreService genreService) {
         this.filmDbStorage = filmDbStorage;
+        this.genreService = genreService;
     }
 
     public Collection<Film> findAll() {
         Collection<Film> films = filmDbStorage.findAll();
+
+        HashMap<Long, List<Genre>> genres = genreService.findAllByFilmId(films.stream().map(Film::getId).toList());
+        for (Film film : films) {
+            film.setGenres(genres.get(film.getId()));
+        }
+
         return films;
     }
 
@@ -38,6 +47,10 @@ public class FilmService {
         }
         Film result = filmDbStorage.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
+        HashMap<Long, List<Genre>> genres = genreService.findAllByFilmId(List.of(id));
+        if (!genres.isEmpty()) {
+            result.setGenres(genres.get(id));
+        }
         return result;
     }
 

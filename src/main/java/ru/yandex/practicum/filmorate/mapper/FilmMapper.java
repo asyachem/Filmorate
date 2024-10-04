@@ -1,11 +1,8 @@
 package ru.yandex.practicum.filmorate.mapper;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -17,7 +14,6 @@ import java.time.LocalDate;
 
 @Slf4j
 @Component
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilmMapper implements RowMapper<Film> {
     final static Integer MAX_LENGTH_DESCRIPTION = 200;
     final static LocalDate OLD_RELEASE_DATE = LocalDate.of(1895, 12, 28);
@@ -54,23 +50,6 @@ public class FilmMapper implements RowMapper<Film> {
         }
 
         return film;
-    }
-
-    public static FilmDto mapToFilmDto(Film film) {
-        FilmDto dto = new FilmDto();
-        dto.setId(film.getId());
-        dto.setName(film.getName());
-        dto.setDescription(film.getDescription());
-
-        if (film.getMpa() != null) {
-            dto.setMpa(makeMpa(film.getMpa().getId()));
-        } else {
-            dto.setMpa(null);
-        }
-
-        dto.setReleaseDate(film.getReleaseDate());
-        dto.setDuration(film.getDuration());
-        return dto;
     }
 
     public static Genre makeGenre(long genreId) {
@@ -135,13 +114,16 @@ public class FilmMapper implements RowMapper<Film> {
 
     @Override
     public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return Film.builder()
+        Film film = Film.builder()
                 .id(rs.getLong("id"))
                 .name(rs.getString("name"))
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("release_date").toLocalDate())
                 .duration(rs.getInt("duration"))
-                .mpa(makeMpa(rs.getLong("mpa")))
                 .build();
+        if (rs.getLong("mpa_id") != 0) {
+            film.setMpa(new Mpa(rs.getLong("mpa_id"), rs.getString("mpa_name")));
+        }
+        return film;
     }
 }

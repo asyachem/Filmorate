@@ -7,15 +7,17 @@ import org.springframework.jdbc.core.RowMapper;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.dal.FilmDbStorage;
+import ru.yandex.practicum.filmorate.dal.GenreDbStorage;
 import ru.yandex.practicum.filmorate.dal.UserDbStorage;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.mapper.FilmResultSetExtractor;
+import ru.yandex.practicum.filmorate.mapper.FilmGenreMapper;
+import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.GenreService;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.io.IOException;
 import java.net.URI;
@@ -41,9 +43,8 @@ class FilmorateApplicationTests {
         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
             return null;
         }
-    },
-            new FilmResultSetExtractor())));
-    UserController userController = new UserController(new UserService(new InMemoryUserStorage(), new UserDbStorage(new JdbcTemplate(), new RowMapper<User>() {
+    }), new GenreService(new GenreDbStorage(new JdbcTemplate(), new GenreMapper(), new FilmGenreMapper()))));
+    UserController userController = new UserController(new UserService(new UserDbStorage(new JdbcTemplate(), new RowMapper<User>() {
         @Override
         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
             return null;

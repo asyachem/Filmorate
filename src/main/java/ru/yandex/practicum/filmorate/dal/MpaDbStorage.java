@@ -6,7 +6,6 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public class MpaDbStorage extends BaseDbStorage<Mpa> {
@@ -22,7 +21,7 @@ public class MpaDbStorage extends BaseDbStorage<Mpa> {
         return findMany(FIND_ALL_MPA_QUERY);
     }
 
-    public Optional<Mpa> findById(long mpaId) {
+    public Mpa findById(long mpaId) {
         return findOne(FIND_BY_ID_QUERY, mpaId);
     }
 }

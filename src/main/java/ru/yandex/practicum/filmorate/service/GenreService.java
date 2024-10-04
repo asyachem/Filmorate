@@ -3,10 +3,11 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.GenreDbStorage;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -22,7 +23,10 @@ public class GenreService {
     }
 
     public Genre findById(long genreId) {
-        return genreDbStorage.findById(genreId)
-                .orElseThrow(() -> new NotFoundException("Жанр не найден"));
+        return genreDbStorage.findById(genreId);
+    }
+
+    public HashMap<Long, List<Genre>> findAllByFilmId(List<Long> ids) {
+        return genreDbStorage.findAllByFilmId(ids);
     }
 }

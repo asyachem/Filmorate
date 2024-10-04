@@ -1,47 +1,35 @@
 package ru.yandex.practicum.filmorate.dal;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 public class BaseDbStorage<T> {
     protected final JdbcTemplate jdbc;
     protected final RowMapper<T> mapper;
 
-    protected Optional<T> findOne(String query, Object... params) {
+    protected T findOne(String query, Object... params) {
         List<T> results = jdbc.query(query, mapper, params);
-        if(!results.isEmpty()){
-            return Optional.of(results.getFirst());
-        }
-        else {
-            return Optional.empty();
+        if (!results.isEmpty()) {
+            return results.getFirst();
+        } else {
+            log.warn("Объект не найден");
+            throw new NotFoundException("Объект не найден");
         }
     }
-
-/*    protected Optional<List<T>> findOne(String query, Object... params) {
-        return Optional.ofNullable(jdbc.query(query, mapper, params));
-    }*/
 
     protected List<T> findMany(String query, Object... params) {
         return jdbc.query(query, mapper, params);
-    }
-
-    protected List<T> findMany(String query, ResultSetExtractor<List<T>> extractor, Object... params) {
-        return jdbc.query(query, extractor, params);
-    }
-
-    protected boolean delete(String query, long id) {
-        int rowsDeleted = jdbc.update(query, id);
-        return rowsDeleted > 0;
     }
 
     protected boolean deleteParams(String query, Object... params) {

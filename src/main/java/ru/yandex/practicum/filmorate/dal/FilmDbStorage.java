@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.mapper.FilmResultSetExtractor;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
@@ -18,11 +17,13 @@ import java.util.Optional;
 @Slf4j
 @Repository
 public class FilmDbStorage extends BaseDbStorage<Film> {
-    private static final String FIND_FILMS_QUERY = "select f.id, f.name, f.description, f.release_date, f.duration, g.id as genre_id, g.name as genre_name, m.id as mpa_id, m.name as mpa_name from films f left join film_genres fg on f.id = fg.film_id left join genres g on g.id = fg.genre_id left join mpas m on m.id = f.mpa";
-    private static final String FIND_ALL_QUERY = FIND_FILMS_QUERY + " order by f.id, g.id";
-    private static final String FIND_BY_ID_QUERY = FIND_FILMS_QUERY + " where f.id=? order by f.id, g.id";
+    private static final String FIND_ALL_QUERY = "select f.*, m.id as mpa_id, m.name as mpa_name from films f, mpas m where f.mpa = m.id order by f.id, m.id";
+    private static final String FIND_BY_ID_QUERY = "select f.*, m.id as mpa_id, m.name as mpa_name from films f, mpas m where f.mpa = m.id and f.id=? order by f.id, m.id";
     private static final String FIND_USER_LIKES_QUERY = "SELECT * FROM users WHERE id IN (select users_id from film_users where film_id = ?)";
-    private static final String FIND_POPULAR_QUERY = "select * from films AS f inner join (select film_id, count(*) as cnt from film_users group by film_id) AS uf on uf.film_id = f.id order by uf.cnt DESC LIMIT ?";
+    private static final String FIND_POPULAR_QUERY = "select f.*, m.id as mpa_id, m.name as mpa_name from films AS f " +
+            " inner join (select film_id, count(*) as cnt from film_users group by film_id) AS uf on uf.film_id = f.id" +
+            " inner join mpas m on m.id = f.mpa " +
+            " order by uf.cnt DESC LIMIT ?";
     private static final String INSERT_QUERY = "INSERT INTO films (name, description, mpa, release_date, duration) " +
             "VALUES (?, ?, ?, ?, ?)";
     private static final String INSERT_GENRE_QUERY = "INSERT INTO film_genres (film_id, genre_id) " +
@@ -33,22 +34,19 @@ public class FilmDbStorage extends BaseDbStorage<Film> {
     private static final String DELETE_LIKED_USER_QUERY = "DELETE FROM film_users WHERE film_id = ? AND users_id = ?";
     private static final String DELETE_GENRES_QUERY = "DELETE FROM film_genres WHERE film_id = ?";
 
-    private RowMapper<User> userRowMapper;
+    private final RowMapper<User> userRowMapper;
 
-    private FilmResultSetExtractor filmResultSetExtractor;
-
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, RowMapper<User> userRowMapper, FilmResultSetExtractor filmResultSetExtractor) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, RowMapper<User> userRowMapper) {
         super(jdbc, mapper);
         this.userRowMapper = userRowMapper;
-        this.filmResultSetExtractor = filmResultSetExtractor;
     }
 
     public List<Film> findAll() {
-        return findMany(FIND_ALL_QUERY, filmResultSetExtractor);
+        return findMany(FIND_ALL_QUERY);
     }
 
     public Optional<Film> findById(long filmId) {
-        List<Film> films = findMany(FIND_BY_ID_QUERY, filmResultSetExtractor, filmId);
+        List<Film> films = findMany(FIND_BY_ID_QUERY, filmId);
         return films.isEmpty() ? Optional.empty() : Optional.of(films.getFirst());
     }
 

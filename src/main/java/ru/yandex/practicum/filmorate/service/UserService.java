@@ -5,23 +5,19 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.UserDbStorage;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collection;
 
 @Slf4j
 @Service
 public class UserService {
-    private final UserStorage userStorage;
     private final UserDbStorage userDbStorage;
 
-    public UserService(UserStorage userStorage, UserDbStorage userDbStorage) {
-        this.userStorage = userStorage;
+    public UserService(UserDbStorage userDbStorage) {
         this.userDbStorage = userDbStorage;
     }
 
@@ -51,7 +47,7 @@ public class UserService {
         }
 
         if (user.getId() != null) {
-            if (userDbStorage.findByEmail(user.getId()).isPresent()) {
+            if (userDbStorage.findByEmail(user.getId()) != null) {
                 log.warn("уже существует пользователь с заданным имейлом");
                 throw new DuplicatedDataException("Этот имейл уже используется");
             }
@@ -66,9 +62,8 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        User updatedUser = userDbStorage.findById(newUser.getId())
-                .map(user -> UserMapper.updateUserFields(user, newUser))
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        User user = userDbStorage.findById(newUser.getId());
+        User updatedUser = UserMapper.updateUserFields(user, newUser);
 
         updatedUser = userDbStorage.update(updatedUser);
 
@@ -81,10 +76,8 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        userDbStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
-        userDbStorage.findById(friendId)
-                .orElseThrow(() -> new NotFoundException("Друг пользователя не найден"));
+        userDbStorage.findById(userId);
+        userDbStorage.findById(friendId);
 
         userDbStorage.addFriends(userId, friendId);
     }
@@ -95,10 +88,8 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        userDbStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
-        userDbStorage.findById(friendId)
-                .orElseThrow(() -> new NotFoundException("Друг пользователя не найден"));
+        userDbStorage.findById(userId);
+        userDbStorage.findById(friendId);
 
         userDbStorage.deleteFriend(userId, friendId);
     }
@@ -109,8 +100,7 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        userDbStorage.findById(userId)
-            .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        userDbStorage.findById(userId);
 
        return userDbStorage.findFriends(userId);
     }

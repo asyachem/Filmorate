@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.MpaDbStorage;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.Collection;
@@ -20,7 +19,6 @@ public class MpaService {
     }
 
     public Mpa findById(long mpaId) {
-        return mpaDbStorage.findById(mpaId)
-                .orElseThrow(() -> new NotFoundException("Рейтинг не найден"));
+        return mpaDbStorage.findById(mpaId);
     }
 }
