@@ -2,26 +2,27 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.UserDbStorage;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collection;
 
 @Slf4j
 @Service
 public class UserService {
-    private final UserStorage userStorage;
+    private final UserDbStorage userDbStorage;
 
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
+    public UserService(UserDbStorage userDbStorage) {
+        this.userDbStorage = userDbStorage;
     }
 
     public Collection<User> findAll()  {
-        return userStorage.getAll();
+        return userDbStorage.findAll();
     }
 
     public User create(User user) {
@@ -45,11 +46,14 @@ public class UserService {
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
 
-        checkEmail(user);
-        user.setId(getNextId());
-        userStorage.putUser(user);
-        userStorage.putEmail(user.getEmail());
-        return user;
+        if (user.getId() != null) {
+            if (userDbStorage.findByEmail(user.getId()) != null) {
+                log.warn("уже существует пользователь с заданным имейлом");
+                throw new DuplicatedDataException("Этот имейл уже используется");
+            }
+        }
+
+        return userDbStorage.save(user);
     }
 
     public User update(User newUser) {
@@ -58,102 +62,55 @@ public class UserService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        User oldUser = userStorage.getUser(newUser.getId());
+        User user = userDbStorage.findById(newUser.getId());
+        User updatedUser = UserMapper.updateUserFields(user, newUser);
 
-        if (!oldUser.getEmail().equals(newUser.getEmail())) {
-            checkEmail(newUser);
-        }
+        updatedUser = userDbStorage.update(updatedUser);
 
-        if (newUser.getName() != null) {
-            oldUser.setName(newUser.getName());
-        }
-        if (newUser.getEmail() != null) {
-            if (!newUser.getEmail().contains("@")) {
-                log.warn("емейл указан без @");
-                throw new ValidationException("Почта должна содержать @");
-            }
-            userStorage.removeEmail(oldUser.getEmail());
-            oldUser.setEmail(newUser.getEmail());
-            userStorage.addEmail(newUser.getEmail());
-        }
-        if (newUser.getLogin() != null) {
-            if (newUser.getLogin().indexOf(' ') != -1) {
-                log.warn("логин указан с пробелами");
-                throw new ValidationException("Логин не может быть пустым и содержать пробелы");
-            }
-            oldUser.setLogin(newUser.getLogin());
-        }
-        if (newUser.getBirthday() != null) {
-            if (newUser.getBirthday().isAfter(LocalDate.now())) {
-                log.warn("указали неверную дату рождения");
-                throw new ValidationException("Дата рождения не может быть в будущем");
-            }
-            oldUser.setBirthday(newUser.getBirthday());
-        }
-
-        return oldUser;
-
+        return updatedUser;
     }
 
-    private void checkEmail(User user) {
-        if (userStorage.containsEmail(user.getEmail())) {
-            log.warn("уже существует пользователь с заданным имейлом");
-            throw new DuplicatedDataException("Этот имейл уже используется");
-        }
-    }
-
-    private long getNextId() {
-        return userStorage.getNextId();
-    }
-
-    public User addFriend(Long userId, Long friendId) {
+    public void addFriend(Long userId, Long friendId) {
         if (userId == null || friendId == null) {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        User user = userStorage.getUser(userId);
-        User friend = userStorage.getUser(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
+        userDbStorage.findById(userId);
+        userDbStorage.findById(friendId);
 
-        return userStorage.getUser(userId);
+        userDbStorage.addFriends(userId, friendId);
     }
 
-    public User deleteFriend(Long userId, Long friendId) {
+    public void deleteFriend(Long userId, Long friendId) {
         if (userId == null || friendId == null) {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        User user = userStorage.getUser(userId);
-        User friend = userStorage.getUser(friendId);
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
+        userDbStorage.findById(userId);
+        userDbStorage.findById(friendId);
 
-        return user;
+        userDbStorage.deleteFriend(userId, friendId);
     }
 
-    public Collection<Long> findUserFriends(Long userId) {
+    public Collection<User> findUserFriends(Long userId) {
         if (userId == null) {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        return new ArrayList<>(userStorage.getUser(userId).getFriends());
+        userDbStorage.findById(userId);
+
+       return userDbStorage.findFriends(userId);
     }
 
-    public Collection<Long> findMutualFriends(Long userId, Long otherId) {
+    public Collection<User> findMutualFriends(Long userId, Long otherId) {
         if (userId == null || otherId == null) {
             log.warn("ошибка - не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
-        User user = userStorage.getUser(userId);
-        User otherUser = userStorage.getUser(otherId);
-
-        Set<Long> usersFriend = new HashSet<>(user.getFriends());
-        usersFriend.retainAll(otherUser.getFriends());
-        return usersFriend;
+        return userDbStorage.findMutualFriends(userId, otherId);
     }
 }
